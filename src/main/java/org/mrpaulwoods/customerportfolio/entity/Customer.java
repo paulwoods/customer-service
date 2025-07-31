@@ -1,4 +1,4 @@
-package org.mrpaulwoods.customerportfolio.domain;
+package org.mrpaulwoods.customerportfolio.entity;
 
 import org.springframework.data.annotation.Id;
 

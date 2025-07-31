@@ -1,5 +1,6 @@
-package org.mrpaulwoods.customerportfolio.domain;
+package org.mrpaulwoods.customerportfolio.entity;
 
+import org.mrpaulwoods.customerportfolio.domain.Ticker;
 import org.springframework.data.annotation.Id;
 
 public class PortfolioItem {
