@@ -9,4 +9,8 @@ public record StockTradeRequest(
         Integer quantity,
         TradeAction action
 ) {
+    public Integer totalPrice() {
+        return price * quantity;
+    }
+
 }
