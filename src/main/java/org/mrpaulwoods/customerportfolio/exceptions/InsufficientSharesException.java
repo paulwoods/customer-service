@@ -1,0 +1,10 @@
+package org.mrpaulwoods.customerportfolio.exceptions;
+
+public class InsufficientSharesException extends RuntimeException {
+
+    public static final String MESSAGE = "Customer [id=%d] does not have enough shares to complete the transaction";
+
+    public InsufficientSharesException(Integer customerId) {
+        super(MESSAGE.formatted(customerId));
+    }
+}
