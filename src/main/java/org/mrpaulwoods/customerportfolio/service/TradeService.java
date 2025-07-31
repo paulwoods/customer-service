@@ -50,17 +50,42 @@ public class TradeService {
     private Mono<StockTradeResponse> executeBuy(
             Customer customer,
             PortfolioItem portfolioItem,
-            StockTradeRequest stockTradeRequest
+            StockTradeRequest request
     ) {
-        customer.setBalance(customer.getBalance() - stockTradeRequest.totalPrice());
-        portfolioItem.setQuantity(portfolioItem.getQuantity() + stockTradeRequest.quantity());
-        var response = EntityDtoMapper.toStockTradeResponse(stockTradeRequest, customer.getId(), customer.getBalance());
-        return Mono.zip(customerRepository.save(customer), portfolioItemRepository.save(portfolioItem))
-                .thenReturn(response);
+        customer.setBalance(customer.getBalance() - request.totalPrice());
+        portfolioItem.setQuantity(portfolioItem.getQuantity() + request.quantity());
+        return saveAndBuildResponse(customer, portfolioItem, request);
     }
 
     private Mono<StockTradeResponse> sellStock(Integer customerId, StockTradeRequest request) {
-        return null;
+
+        var customerMono = customerRepository
+                .findById(customerId)
+                .switchIfEmpty(ApplicationExceptions.customerNotFound(customerId));
+
+        var portfolioItemMono = portfolioItemRepository
+                .findByCustomerIdAndTicker(customerId, request.ticker())
+                .filter(item -> item.getQuantity() >= request.quantity())
+                .switchIfEmpty(ApplicationExceptions.insufficientShares(customerId));
+
+        return customerMono.zipWhen(customer -> portfolioItemMono)
+                .flatMap(t -> this.executeSell(t.getT1(), t.getT2(), request));
+    }
+
+    private Mono<StockTradeResponse> executeSell(
+            Customer customer,
+            PortfolioItem portfolioItem,
+            StockTradeRequest request
+    ) {
+        customer.setBalance(customer.getBalance() + request.totalPrice());
+        portfolioItem.setQuantity(portfolioItem.getQuantity() - request.quantity());
+        return saveAndBuildResponse(customer, portfolioItem, request);
+    }
+
+    private Mono<StockTradeResponse> saveAndBuildResponse(Customer customer, PortfolioItem portfolioItem, StockTradeRequest stockTradeRequest) {
+        StockTradeResponse response = EntityDtoMapper.toStockTradeResponse(stockTradeRequest, customer.getId(), customer.getBalance());
+        return Mono.zip(customerRepository.save(customer), portfolioItemRepository.save(portfolioItem))
+                .thenReturn(response);
     }
 
 }
